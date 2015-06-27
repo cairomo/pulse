@@ -11,7 +11,51 @@
      <title>pulse</title>
     
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    
+  
+    <script>
+        function getSongs() {
+            var seedName = $("#seedname").val();
+            var seedArtist = $("#seedartist").val();
+            var apikey = "JFWCRLMETTMP5IJCA";
+            
+            var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
+                apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
+            var bucketUrl;
+            var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
+                + "&name=" + seedArtist + "&format=json";
+            var id;
+            var tempo = 0;
+            var genres;
+            var duration = 0;
+            $.ajax({
+                url: url,
+                success: function(data, status) {
+                    id = data.response.songs[0].id;
+                    bucketUrl = "http://developer.echonest.com/api/v4/song/profile?api_key=" + apikey 
+                        + "&id=" + id + "&bucket=audio_summary";
+                    $.ajax({
+                        url: bucketUrl,
+                        success: function(data, status) {
+                            tempo = data.response.songs[0].audio_summary.tempo;
+                            console.log("tempo: " + tempo);
+                            duration = data.response.songs[0].audio_summary.duration;
+                            console.log("duration" + duration);
+                        }
+                    });
+                }
+            });
+            $.ajax({
+                url: styleUrl,
+                success: function(data, status) {
+                    for (var i = 0; i < data.response.terms.length; i++) {
+                        genres.add(data.response.terms[i].name);
+                    }
+                }
+            });
+        }
+    // JFWCRLMETTMP5IJCA 
+    </script>
+  
     <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
     <style type="text/css">
     /* css goes here */
