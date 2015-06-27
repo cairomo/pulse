@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!--  
+                                               
+ PULSE
+                  
+-->
+    
+<head>
+    <meta charset="utf-8">
+     <title>pulse</title>
+    
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    
+    <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
+    <style type="text/css">
+    /* css goes here */
+        * {margin:0;border:0;padding:0;}
+        html {
+            height:100%;
+        }
+        body {
+            background: #424242;
+            background-attachment:fixed;
+            font-family:'Roboto';
+            padding:0;	
+            color:#fff;
+            font-weight:300;
+            letter-spacing:0.2px;
+            word-spacing:0.5px;
+            overflow-y:hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <header><h2>PULSE</h2></header>
+        <center>
+            Seed song name:<br>
+            <input type="text" name="seedname">
+            <p>
+            Seed song artist:<br>
+            <input type="text" name="seedartist">
+            <p>
+            Activity:<br>
+            <select id="activitymenu">
+              <option value="sleep">sleeping</option>
+              <option value="run">running</option>
+            </select>
+            <button type="button" id="generate">GENERATE</button>
+        </center>
+</body>
+    
+
+</html>
