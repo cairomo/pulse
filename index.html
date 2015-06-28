@@ -20,9 +20,186 @@
  		<!-- Latest compiled and minified JavaScript -->
  	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="http://static.echonest.com/enspex/web/common/spotify_en_tools.js"></script>
-   <script src="https://cdn.rawgit.com/prouvaire/pulse/master/pulse.js"></script>
+  <!-- <script src="https://cdn.rawgit.com/prouvaire/pulse/master/pulse.js"></script> -->
 
+    <script>
+    /* TODO 
+    - use id to get tempo, duration, genres
+    - put id into spotify to get similar songs
+    - sort those songs by tempo/bpm
+    - make up a function of time of the ideal change in tempo
+    - when each song is done, reference the function (pass in current time) and get
+                back the ideal bpm for the current time
+    - play next song that fits in the range of ideal bpm
+*/
 
+var apikey = "JFWCRLMETTMP5IJCA";
+var clientID = "40f5df559dbd45f09cff9f08a29a0ec6";
+var id;
+var duration;
+var restingHeartRate;
+var targetHeartRate;
+var genres = [];
+var songsList = []; // list of all similar songs, sorted
+var finalList = []; // list of songs in playlist in order
+var error = 5; // + or - range from ideal bpm
+
+function getSongs() {
+    songsList = [];
+    var seedName = $("#seedname").val();
+    var seedArtist = $("#seedartist").val();
+    duration = $("#duration").val();
+    var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
+        apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
+    var bucketUrl;
+    var spotifyID;
+    $.ajax({
+        url: url,
+        success: function(data, status) {
+            id = data.response.songs[0].id;
+            console.log(id);
+            bucketUrl = "http://developer.echonest.com/api/v4/song/profile?api_key=" + apikey 
+                + "&id=" + id + "&bucket=audio_summary";
+            callBucket(bucketUrl, seedArtist);
+        }
+    });    
+    // spotifyID = getSpotifyID(id, seedName, seedArtist, apikey);
+    // return spotifyID;
+}
+
+function callBucket(bucketUrl, seedArtist) {
+    $.ajax({
+        url: bucketUrl,
+        success: function(data, status) {
+            var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
+                + "&name=" + encodeURI(seedArtist) + "&format=json";
+            getGenre(styleUrl);
+        }
+    });
+}
+
+function getGenre(styleUrl) {
+     $.ajax({
+        url: styleUrl,
+        success: function(data, status) {
+            for (var i = 0; i < data.response.terms.length; i++) {
+                genres.push(data.response.terms[i].name);
+            }
+            similarSongs();
+        }
+    });  
+}   
+
+function similarSongs() {
+    restingHeartRate = $("#restingHeartRate").val();
+    targetHeartRate = restingHeartRate * .8;
+    // var numSongs = Math.ceil($("#duration").val() / 2.5);
+    if (Math.ceil($("#duration").val() * 5) < 100) {
+        var numSongs = Math.ceil($("#duration").val() * 5);
+    } else {
+        var numSongs = 100;
+    }  // todo fix algorithm problem
+    var radiourl = "http://developer.echonest.com/api/v4/playlist/static?api_key=" +
+        apikey + "&song_id=" + id + "&min_tempo=" + targetHeartRate + "&max_tempo=" 
+        + restingHeartRate + "&format=json&results=" + numSongs +
+        "&type=song-radio&bucket=audio_summary&sort=tempo-desc" 
+    // sort increasing or decreasing depending on activity
+    $.ajax({
+        url: radiourl,
+        success: function(data, status) {
+            var temp = data.response.songs;
+            for (var i = 0; i < data.response.songs.length ; i++) {
+                songsList.push({
+                    "artist_name"   :   temp[i].artist_name,
+                    "title"         :   temp[i].title,
+                    "tempo"         :   temp[i].audio_summary.tempo,
+                    "duration"      :   temp[i].audio_summary.duration
+                });
+            }
+            sort(0, songsList.length - 1);
+        }
+    });
+}
+        
+function partition(lo, hi) {
+    var i = lo;
+    var j = hi + 1;
+    while (true) {
+        while (songsList[++i].tempo < songsList[lo]) {
+            if ( i === hi ) {
+                break;
+            }
+        }
+        while (songsList[lo].tempo < songsList[--j]) {
+            if ( j === lo ) {
+                break;
+            }
+        }
+        if ( i >= j ) {
+            break;
+        }
+        swap(songsList, i, j);
+    }
+    swap(songsList, lo, j);
+    return j;
+}
+
+function sort(lo, hi) {
+    if (hi <= lo) {
+        return;
+    }
+    var j = partition(lo, hi);
+    sort(lo, j-1);
+    sort(j+1, hi);
+    filterList();
+}
+
+function swap(items, firstIndex, secondIndex) {
+    var temp = items[firstIndex];
+    items[firstIndex] = items[secondIndex];
+    items[secondIndex] = temp;
+}
+
+function filterList() {
+    var counter = 0;
+    var totalPlaylistTime = 0;
+    for (var i = 0; i < songsList.length; i++) {
+        if (Math.abs(songsList[i].tempo - idealBPM(counter)) < error) {
+            finalList.push(songsList[i]);
+            totalPlaylistTime += songsList[i].duration;
+            console.log("title: " + songsList[i].title + "\t" + songsList[i].tempo);
+        }
+        counter += songsList[i].duration;
+    }
+}
+
+function idealBPM(time) {
+    // y - y1 = m (x - x1)
+    // 
+    // y1 = restingHeartRate, x1 = 0
+    // y = bpm, x = curr total time
+    // m = (targetHeartRate - restingHeartRate) / duration 
+    // y = m (x - x1) + y1
+    var bpm = ((targetHeartRate - restingHeartRate) / duration ) * (time/60) + parseInt(restingHeartRate);
+    return bpm;
+}
+
+function getSpotifyID(name, artist, apikey) {
+    var spotifyUrl = "http://developer.echonest.com/api/v4/song/search?api_key=" +
+        apikey + "&format=json&results=1&artist=" + encodeURI(artist) + "&title=" + 
+        encodeURI(name) + "&bucket=id:spotify&bucket=tracks&limit=true";
+    var spotifyID = 0;
+    $.ajax({
+        url: spotifyUrl,
+        success: function(data, status) {
+            spotifyID = data.response.songs[0].artist_foreign_ids[0].foreign_id;
+            playSong(spotifyID);
+        }
+    });
+}
+
+// JFWCRLMETTMP5IJCA 
+    </script>
     <link href="http://fonts.googleapis.com/css?family=Roboto|Quicksand" rel="stylesheet" />
     <style type="text/css">
     /* css goes here */
