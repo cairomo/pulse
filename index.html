@@ -102,6 +102,7 @@ var targetHeartRate;
 var genres = [];
 var songsList = []; // list of all similar songs, sorted
 var finalList = []; // list of songs in playlist in order
+var spotifyURIS = []; // spotify uris for finallist songs
 var error = 5; // + or - range from ideal bpm
 
 function getSongs() {
@@ -176,11 +177,15 @@ function similarSongs() {
                     "duration"      :   temp[i].audio_summary.duration
                 });
             }
-            sort(0, songsList.length - 1);
+            // array of song data
+            songsList.sort(function(a,b) { 
+              return b.tempo - a.tempo;
+            });
+            filterList();
         }
     });
 }
-        
+  /*      
 function partition(lo, hi) {
     var i = lo;
     var j = hi + 1;
@@ -212,13 +217,13 @@ function sort(lo, hi) {
     sort(lo, j-1);
     sort(j+1, hi);
     filterList();
-}
+} 
 
 function swap(items, firstIndex, secondIndex) {
     var temp = items[firstIndex];
     items[firstIndex] = items[secondIndex];
     items[secondIndex] = temp;
-}
+}*/
 
 function filterList() {
     var counter = 0;
@@ -405,9 +410,14 @@ function getSpotifyID(name, artist, apikey) {
                     'public': true
                 }),
                 success: function(response) {
+                    var playlistID = response.id;
                   console.log(response);
+                    addToPlaylist();
                 }
             });     
+        }
+        
+        function addToPlaylist(track, playlistID) {
         }
         
     </script>
