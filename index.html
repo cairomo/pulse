@@ -2,9 +2,10 @@
 <html>
   <head>
     <title>pulse</title>
-       		<!-- Latest compiled and minified JavaScript -->
- 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+             		<!-- Latest compiled and minified JavaScript -->
+ 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
      <!-- Latest compiled and minified CSS -->
  	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 
@@ -41,9 +42,10 @@
         }
         h4 {
           margin: 10px;
+            font-size: 2em;
         }
         .container1 {
-          width: 500px;
+          width: 650px;
         }
         
         input, select, textarea {
@@ -68,10 +70,27 @@
         .template1 {
             display: none;
         }
+        input.rounded {
+          border: 1px solid #ccc;
+          -moz-border-radius: 10px;
+          -webkit-border-radius: 10px;
+          border-radius: 10px;
+          -moz-box-shadow: 2px 2px 3px #666;
+          -webkit-box-shadow: 2px 2px 3px #666;
+          box-shadow: 2px 2px 3px #666;
+          font-size: 20px;
+          padding: 4px 7px;
+          outline: 0;
+          -webkit-appearance: none;
+        }
+        input.rounded:focus {
+          border: solid 1px #666;
+          box-shadow: 0 0 5px 1px #666;
+        }
     </style>
     <style type="text/css">
       #login, #loggedin {
-        display: none;
+        display: visible;
       }
       .text-overflow {
         overflow: hidden;
@@ -101,7 +120,13 @@ var targetHeartRate;
 var genres = [];
 var songsList = []; // list of all similar songs, sorted
 var finalList = []; // list of songs in playlist in order
+var spotifyURIS = []; // spotify uris for finallist songs
 var error = 5; // + or - range from ideal bpm
+var playlistID;
+var trackStrings = "https://embed.spotify.com/?uri=spotify:trackset:PULSE:";
+var firstTrack = "0";
+var username;
+var access_token;
 
 function getSongs() {
     songsList = [];
@@ -175,11 +200,15 @@ function similarSongs() {
                     "duration"      :   temp[i].audio_summary.duration
                 });
             }
-            sort(0, songsList.length - 1);
+            // array of song data
+            songsList.sort(function(a,b) { 
+              return b.tempo - a.tempo;
+            });
+            filterList();
         }
     });
 }
-        
+  /*      
 function partition(lo, hi) {
     var i = lo;
     var j = hi + 1;
@@ -211,12 +240,20 @@ function sort(lo, hi) {
     sort(lo, j-1);
     sort(j+1, hi);
     filterList();
-}
+} 
 
 function swap(items, firstIndex, secondIndex) {
     var temp = items[firstIndex];
     items[firstIndex] = items[secondIndex];
     items[secondIndex] = temp;
+}*/
+              
+function createButton() {
+   // $("#playlist").html('<iframe src="' + trackStrings + '"frameborder="0" allowtransparency="true"  width="380" height="300"></iframe>');
+    var temp = '<iframe src="https://embed.spotify.com/?uri=spotify:track:7tZQgmmN60YOiYlvMOlfdm" width="300" height="380" frameborder="0" allowtransparency="true"></iframe>'
+     $("#playlist").html(temp + '<p>73.54 bpm'); 
+    
+    // $("#playlist").html(temp + '<p>' + finalList[0].tempo + ' bpm'); 
 }
 
 function filterList() {
@@ -225,11 +262,12 @@ function filterList() {
     for (var i = 0; i < songsList.length; i++) {
         if (Math.abs(songsList[i].tempo - idealBPM(counter)) < error) {
             finalList.push(songsList[i]);
-            totalPlaylistTime += songsList[i].duration;
+            getSpotifyID(songsList[i].title, songsList[i].artist_name, apikey);
             console.log("title: " + songsList[i].title + "\t" + songsList[i].tempo);
         }
         counter += songsList[i].duration;
     }
+    createButton();
 }
 
 function idealBPM(time) {
@@ -251,8 +289,8 @@ function getSpotifyID(name, artist, apikey) {
     $.ajax({
         url: spotifyUrl,
         success: function(data, status) {
-            spotifyID = data.response.songs[0].artist_foreign_ids[0].foreign_id;
-            playSong(spotifyID);
+            spotifyID = data.response.songs[0].tracks[0].foreign_id;
+            addToPlaylist(spotifyID, playlistID);
         }
     });
 }
@@ -311,7 +349,6 @@ function getSpotifyID(name, artist, apikey) {
     </script>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script>
       (function() {
 
@@ -339,19 +376,22 @@ function getSpotifyID(name, artist, apikey) {
 
         var params = getHashParams();
 
-        var access_token = params.access_token,
-            refresh_token = params.refresh_token,
+        access_token = params.access_token;
+         var refresh_token = params.refresh_token,
             error = params.error;
 
         if (error) {
           alert('There was an error during the authentication');
         } else {
-          if (access_token) {
+          if (access_token) { // success
+                $('#login').hide();
+                $('#loggedin').show();
             // render oauth info
             oauthPlaceholder.innerHTML = oauthTemplate({
               access_token: access_token,
               refresh_token: refresh_token
             });
+              
 
             $.ajax({
                 url: 'https://api.spotify.com/v1/me',
@@ -359,22 +399,17 @@ function getSpotifyID(name, artist, apikey) {
                   'Authorization': 'Bearer ' + access_token
                 },
                 success: function(response) {
-                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-
-                  $('#login').hide();
-                  $('#loggedin').show();
+                  username = response.id;
+                    makePlaylist(username, access_token);
                 }
             });
-              
-              
               
           } else {
               // render initial screen
               $('#login').show();
               $('#loggedin').hide();
           }
-
-          document.getElementById('obtain-new-token').addEventListener('click', function() {
+     /*       document.getElementById('obtain-new-token').addEventListener('click', function() {
             $.ajax({
               url: '/refresh_token',
               data: {
@@ -387,9 +422,56 @@ function getSpotifyID(name, artist, apikey) {
                 refresh_token: refresh_token
               });
             });
-          }, false);
+          }, false); */
         }
       })();
+        
+        function makePlaylist(id, access_token) {
+            $.ajax({
+                url: "https://api.spotify.com/v1/users/"+id+"/playlists",
+                method: "POST",
+                Accept: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    'name': 'playlist',
+                    'public': true
+                }),
+                success: function(response) {
+                    playlistID = response.id;
+                  console.log(response);
+                }
+            });     
+        }
+        
+        function addToPlaylist(track, playlistID) { // todo
+            trackStrings += track;
+            trackStrings +=",";
+            /*
+            $.ajax({
+                url: "https://api.spotify.com/v1/users/" +username+ "/playlists/"+ playlistID + "/tracks",
+                method: "POST",
+                Accept: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                data: {
+                    "uris" : track
+                },
+                success: function(response) {
+                    console.log(response);
+                }
+            });*/
+            if (firstTrack === "0") {
+                firstTrack = "https://embed.spotify.com/?uri=" + track;
+            }
+        }
+        
     </script>
       
       <center>
@@ -407,7 +489,7 @@ function getSpotifyID(name, artist, apikey) {
               <h4 class="text-left">Resting Heart Rate: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" id="restingHeartRate"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="restingHeartRate"></h4>
             </div>
           </div>
           <div class="row">
@@ -415,7 +497,7 @@ function getSpotifyID(name, artist, apikey) {
               <h4 class="text-left">Duration: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" id="duration"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="duration"></h4>
             </div>
           </div>
           <div class="row">
@@ -423,7 +505,7 @@ function getSpotifyID(name, artist, apikey) {
               <h4 class="text-left">Seed Song: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" id="seedName"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="seedName"></h4>
             </div>
           </div>
           <div class="row">
@@ -431,13 +513,15 @@ function getSpotifyID(name, artist, apikey) {
               <h4 class="text-left">Seed Artist: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" id="seedArtist"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="seedArtist"></h4>
             </div>
           </div>
         </div>
         </p>
         <br>
-        <button type="button" id="playlist" class="btn btn-lg btn-danger" onclick="getSongs()">GENERATE PLAYLIST</button>
+        <button type="button" id="playlist" class="btn btn-lg btn-default" onclick="getSongs()">GENERATE PLAYLIST</button>
+        <div id="playlist">
+        </div>
   </center>
 </html>
 
