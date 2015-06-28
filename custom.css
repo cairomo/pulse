@@ -1,0 +1,17 @@
+body {
+    background-color: #fbd12e;
+}
+#navbar {
+    color: white;
+}
+.navbar-icon {
+    height: 50px;
+    width: 50px;
+}
+.navbar-inverse {
+  background-color: #666666;
+}
+.
+h1, h2, h3, h4, th {
+    color: #666666;
+}
