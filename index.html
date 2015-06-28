@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<!--
-
- PULSE
-
--->
-
-<head>
-    <meta charset="utf-8">
+<!doctype html>
+<html>
+  <head>
     <title>pulse</title>
-
+       		<!-- Latest compiled and minified JavaScript -->
+ 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
      <!-- Latest compiled and minified CSS -->
  	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -17,12 +11,77 @@
  	  <!-- Optional theme -->
  	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
 
- 		<!-- Latest compiled and minified JavaScript -->
- 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script src="http://static.echonest.com/enspex/web/common/spotify_en_tools.js"></script>
-  <!-- <script src="https://cdn.rawgit.com/prouvaire/pulse/master/pulse.js"></script> -->
 
-    <script>
+    <script src="http://static.echonest.com/enspex/web/common/spotify_en_tools.js"></script>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+          <link href="http://fonts.googleapis.com/css?family=Roboto|Quicksand" rel="stylesheet" />
+    <style type="text/css">
+    /* css goes here */
+        * {margin:0;border:0;padding:0;}
+        html {
+            height:100%;
+        }
+        body {
+            background: #fbd12e;
+            background-attachment:fixed;
+            font-family:'Quicksand';
+            padding:0;
+            color:#fff;
+            font-weight:300;
+            letter-spacing:0.2px;
+            word-spacing:0.5px;
+            overflow-y:scroll;
+        }
+        h1 {
+          font-family: 'Quicksand';
+          font-size: 7em;
+        }
+        .gray-header {
+          background-color: #666666;
+        }
+        h4 {
+          margin: 10px;
+        }
+        .container1 {
+          width: 500px;
+        }
+        
+        input, select, textarea {
+            color: #666666;
+            padding:0.5em;
+        }
+        
+        .btn-primary {
+          color: #fff;
+          background-color: #428bca;
+          border-color: #357ebd;
+          width: 100%;
+          /* left: 0; */
+          position: absolute;
+          left: 0;
+          margin-left: 0;
+        }
+        
+        .template {
+            display: none;
+        }
+        .template1 {
+            display: none;
+        }
+    </style>
+    <style type="text/css">
+      #login, #loggedin {
+        display: none;
+      }
+      .text-overflow {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 500px;
+      }
+    </style>
+      
+          <script>
     /* TODO 
     - use id to get tempo, duration, genres
     - put id into spotify to get similar songs
@@ -198,49 +257,142 @@ function getSpotifyID(name, artist, apikey) {
     });
 }
 
-// JFWCRLMETTMP5IJCA 
-    </script>
-    <link href="http://fonts.googleapis.com/css?family=Roboto|Quicksand" rel="stylesheet" />
-    <style type="text/css">
-    /* css goes here */
-        * {margin:0;border:0;padding:0;}
-        html {
-            height:100%;
-        }
-        body {
-            background: #fbd12e;
-            background-attachment:fixed;
-            font-family:'Quicksand';
-            padding:0;
-            color:#fff;
-            font-weight:300;
-            letter-spacing:0.2px;
-            word-spacing:0.5px;
-            overflow-y:scroll;
-        }
-        h1 {
-          font-family: 'Quicksand';
-          font-size: 7em;
-        }
-        .gray-header {
-          background-color: #666666;
-        }
-        h4 {
-          margin: 10px;
-        }
-        .container {
-          width: 500px;
-        }
+// JFWCRLMETTMP5IJCA
         
-        input, select, textarea {
-            color: #666666;
-            padding:0.5em;
-        }
-    </style>
-</head>
+    </script>
+    
+      
+  </head>
 
-<body>
-  <center>
+  <body>
+    <div class="container">
+      <div id="login">
+        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+      </div>
+      <div id="loggedin">
+        <div id="user-profile">
+        </div>
+        <div id="oauth">
+        </div>
+        <!-- <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button> -->
+      </div>
+    </div>
+
+    <script id="user-profile-template" type="text/x-handlebars-template">
+        <div class = "template">
+          <h1>Logged in as {{display_name}}</h1>
+          <div class="media">
+            <div class="pull-left">
+              <img class="media-object" width="150" src="{{images.0.url}}" />
+            </div>
+            <div class="media-body">
+              <dl class="dl-horizontal">
+                <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
+                <dt>Id</dt><dd>{{id}}</dd>
+                <dt>Email</dt><dd>{{email}}</dd>
+                <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
+                <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
+                <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
+                <dt>Country</dt><dd>{{country}}</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+    </script>
+
+    <script id="oauth-template" type="text/x-handlebars-template">
+        <div class = "template1">
+          <h2>oAuth info</h2>
+          <dl class="dl-horizontal">
+            <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+            <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
+          </dl>
+            </div>
+    </script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script>
+      (function() {
+
+        /**
+         * Obtains parameters from the hash of the URL
+         * @return Object
+         */
+        function getHashParams() {
+          var hashParams = {};
+          var e, r = /([^&;=]+)=?([^&;]*)/g,
+              q = window.location.hash.substring(1);
+          while ( e = r.exec(q)) {
+             hashParams[e[1]] = decodeURIComponent(e[2]);
+          }
+          return hashParams;
+        }
+
+        var userProfileSource = document.getElementById('user-profile-template').innerHTML,
+            userProfileTemplate = Handlebars.compile(userProfileSource),
+            userProfilePlaceholder = document.getElementById('user-profile');
+
+        var oauthSource = document.getElementById('oauth-template').innerHTML,
+            oauthTemplate = Handlebars.compile(oauthSource),
+            oauthPlaceholder = document.getElementById('oauth');
+
+        var params = getHashParams();
+
+        var access_token = params.access_token,
+            refresh_token = params.refresh_token,
+            error = params.error;
+
+        if (error) {
+          alert('There was an error during the authentication');
+        } else {
+          if (access_token) {
+            // render oauth info
+            oauthPlaceholder.innerHTML = oauthTemplate({
+              access_token: access_token,
+              refresh_token: refresh_token
+            });
+
+            $.ajax({
+                url: 'https://api.spotify.com/v1/me',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+                success: function(response) {
+                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
+
+                  $('#login').hide();
+                  $('#loggedin').show();
+                }
+            });
+              
+              
+              
+          } else {
+              // render initial screen
+              $('#login').show();
+              $('#loggedin').hide();
+          }
+
+          document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+              url: '/refresh_token',
+              data: {
+                'refresh_token': refresh_token
+              }
+            }).done(function(data) {
+              access_token = data.access_token;
+              oauthPlaceholder.innerHTML = oauthTemplate({
+                access_token: access_token,
+                refresh_token: refresh_token
+              });
+            });
+          }, false);
+        }
+      })();
+    </script>
+      
+      <center>
     <div class="gray-header">
       <br>
       <img src="https://cloud.githubusercontent.com/assets/5784284/8395221/8e7bb812-1d18-11e5-96e3-cc4ab25e9383.png" alt="Pulse logo" width="250" height="250" border="0">
@@ -249,7 +401,7 @@ function getSpotifyID(name, artist, apikey) {
     </div>
     <br>
       <p>
-        <div class="container">
+        <div class="container1">
           <div class="row">
             <div class="col-sm-6">
               <h4 class="text-left">Resting Heart Rate: </h4>
@@ -287,7 +439,5 @@ function getSpotifyID(name, artist, apikey) {
         <br>
         <button type="button" id="playlist" class="btn btn-lg btn-danger" onclick="getSongs()">GENERATE PLAYLIST</button>
   </center>
-</body>
-
-
 </html>
+
