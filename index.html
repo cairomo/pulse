@@ -149,7 +149,7 @@
             font-weight:300;
             letter-spacing:0.2px;
             word-spacing:0.5px;
-            overflow-y:hidden;
+            overflow-y:scroll;
         }
         h1 {
           font-family: 'Quicksand';
@@ -163,6 +163,11 @@
         }
         .container {
           width: 500px;
+        }
+        
+        input, select, textarea {
+            color: #666666;
+            padding:0.5em;
         }
     </style>
 </head>
@@ -183,7 +188,7 @@
               <h4 class="text-left">Resting Heart Rate: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" name="restingHeartRate"></h4>
+              <h4 class="text-right"><input type="text" id="restingHeartRate"></h4>
             </div>
           </div>
           <div class="row">
@@ -191,14 +196,15 @@
               <h4 class="text-left">Duration: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" name="duration"></h4>
+              <h4 class="text-right"><input type="text" id="duration"></h4>
+            </div>
           </div>
           <div class="row">
             <div class="col-sm-6">
               <h4 class="text-left">Seed Song: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" name="seedName"></h4>
+              <h4 class="text-right"><input type="text" id="seedName"></h4>
             </div>
           </div>
           <div class="row">
@@ -206,13 +212,13 @@
               <h4 class="text-left">Seed Artist: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" name="seedArtist"></h4>
+              <h4 class="text-right"><input type="text" id="seedArtist"></h4>
             </div>
           </div>
         </div>
         </p>
         <br>
-        <button type="button" id="playlist" class="btn btn-lg btn-danger">GENERATE PLAYLIST</button>
+        <button type="button" id="playlist" class="btn btn-lg btn-danger" onclick="getSongs()">GENERATE PLAYLIST</button>
   </center>
 </body>
 
