@@ -1,131 +1,26 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
-<!--  
-                                               
+<!--
+
  PULSE
-                  
+
 -->
-    
+
 <head>
     <meta charset="utf-8">
-     <title>pulse</title>
-    
+    <title>pulse</title>
+
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-  
-    <script>
-         /* TODO 
-            - use id to get tempo, duration, genres
-            - put id into spotify to get similar songs
-            - sort those songs by tempo/bpm
-            - make up a function of time of the ideal change in tempo
-            - when each song is done, reference the function (pass in current time) and get
-                        back the ideal bpm for the current time
-            - play next song that fits in the range of ideal bpm
-        */
-        
-        var apikey = "JFWCRLMETTMP5IJCA";
-        var clientID = "40f5df559dbd45f09cff9f08a29a0ec6";
-        var tempo;
-        var id;
-        var duration;
-        var restingHeartRate;
-        var targetHeartRate;
-        var genres = [];
-        var songsList = [];
-        
-        function getSongs() {
-            songsList = [];
-            var seedName = $("#seedname").val();
-            var seedArtist = $("#seedartist").val();
-            var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
-                apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
-            var bucketUrl;
-            var spotifyID;
-            $.ajax({
-                url: url,
-                success: function(data, status) {
-                    id = data.response.songs[0].id;
-                    console.log(id);
-                    bucketUrl = "http://developer.echonest.com/api/v4/song/profile?api_key=" + apikey 
-                        + "&id=" + id + "&bucket=audio_summary";
-                    callBucket(bucketUrl, seedArtist);
-                }
-            });    
-            // spotifyID = getSpotifyID(id, seedName, seedArtist, apikey);
-            // return spotifyID;
-        }
-        
-        function callBucket(bucketUrl, seedArtist) {
-            $.ajax({
-                url: bucketUrl,
-                success: function(data, status) {
-                    tempo = data.response.songs[0].audio_summary.tempo;
-                    duration = data.response.songs[0].audio_summary.duration;
-                    var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
-                        + "&name=" + encodeURI(seedArtist) + "&format=json";
-                    getGenre(styleUrl);
-                }
-            });
-        }
-        
-        function getGenre(styleUrl) {
-             $.ajax({
-                url: styleUrl,
-                success: function(data, status) {
-                    for (var i = 0; i < data.response.terms.length; i++) {
-                        genres.push(data.response.terms[i].name);
-                    }
-                    similarSongs();
-                }
-            });  
-        }   
-            
-        function similarSongs() {
-            restingHeartRate = $("#restingHeartRate").val();
-            targetHeartRate = restingHeartRate * .8;
-            // var numSongs = Math.ceil($("#duration").val() / 2.5);
-            var numSongs = Math.ceil($("#duration").val() * 5); // todo fix algorithm problem
-            var radiourl = "http://developer.echonest.com/api/v4/playlist/static?api_key=" +
-                apikey + "&song_id=" + id + "&min_tempo=" + targetHeartRate + "&max_tempo=" 
-                + restingHeartRate + "&format=json&results=" + numSongs +
-                "&type=song-radio&bucket=audio_summary&sort=tempo-desc" 
-            // sort increasing or decreasing depending on activity
-            $.ajax({
-                url: radiourl,
-                success: function(data, status) {
-                    var temp = data.response.songs;
-                    for (var i = 0; i < numSongs; i++) {
-                        songsList.push({
-                            "artist_name"   :   temp[i].artist_name,
-                            "title"         :   temp[i].title,
-                            "tempo"         :   temp[i].audio_summary.tempo
-                        });
-                    }
-                    authSpotify();
-                }
-            });
-        }
-        
-        function authSpotify() {
-            
-        }
-   
-        function getSpotifyID(name, artist, apikey) {
-            var spotifyUrl = "http://developer.echonest.com/api/v4/song/search?api_key=" +
-                apikey + "&format=json&results=1&artist=" + encodeURI(artist) + "&title=" + 
-                encodeURI(name) + "&bucket=id:spotify&bucket=tracks&limit=true";
-            var spotifyID = 0;
-            $.ajax({
-                url: spotifyUrl,
-                success: function(data, status) {
-                    spotifyID = data.response.songs[0].artist_foreign_ids[0].foreign_id;
-                    playSong(spotifyID);
-                }
-            });
-        }
-    </script>
-  
-    <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
+     <!-- Latest compiled and minified CSS -->
+ 	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+ 	  <!-- Optional theme -->
+ 	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+ 		<!-- Latest compiled and minified JavaScript -->
+ 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <link href="http://fonts.googleapis.com/css?family=Roboto|Quicksand" rel="stylesheet" />
     <style type="text/css">
     /* css goes here */
         * {margin:0;border:0;padding:0;}
@@ -133,36 +28,80 @@
             height:100%;
         }
         body {
-            background: #424242;
+            background: #fbd12e;
             background-attachment:fixed;
-            font-family:'Roboto';
-            padding:0;	
+            font-family:'Quicksand';
+            padding:0;
             color:#fff;
             font-weight:300;
             letter-spacing:0.2px;
             word-spacing:0.5px;
             overflow-y:hidden;
         }
+        h1 {
+          font-family: 'Quicksand';
+          font-size: 7em;
+        }
+        .gray-header {
+          background-color: #666666;
+        }
+        h4 {
+          margin: 10px;
+        }
+        .container {
+          width: 500px;
+        }
     </style>
 </head>
 
 <body>
-    <header><h2>PULSE</h2></header>
-        <center>
-            Seed song name:<br>
-            <input type="text" name="seedname">
-            <p>
-            Seed song artist:<br>
-            <input type="text" name="seedartist">
-            <p>
-            Activity:<br>
-            <select id="activitymenu">
-              <option value="sleep">sleeping</option>
-              <option value="run">running</option>
-            </select>
-            <button type="button" id="generate">GENERATE</button>
-        </center>
+  <center>
+    <div class="gray-header">
+      <br>
+      <img src="icon.png" alt="Pulse logo" width="250" height="250" border="0">
+      <header><h1><strong>PULSE</strong</h1></header>
+      <br>
+    </div>
+    <br>
+      <p>
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-6">
+              <h4 class="text-left">Resting Heart Rate: </h4>
+            </div>
+            <div class="col-sm-6">
+              <h4 class="text-right"><input type="text" name="restingHeartRate"></h4>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <h4 class="text-left">Duration: </h4>
+            </div>
+            <div class="col-sm-6">
+              <h4 class="text-right"><input type="text" name="duration"></h4>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <h4 class="text-left">Seed Song: </h4>
+            </div>
+            <div class="col-sm-6">
+              <h4 class="text-right"><input type="text" name="seedName"></h4>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <h4 class="text-left">Seed Artist: </h4>
+            </div>
+            <div class="col-sm-6">
+              <h4 class="text-right"><input type="text" name="seedArtist"></h4>
+            </div>
+          </div>
+        </div>
+        </p>
+        <br>
+        <button type="button" id="playlist" class="btn btn-lg btn-danger">GENERATE PLAYLIST</button>
+  </center>
 </body>
-    
+
 
 </html>
