@@ -13,47 +13,116 @@
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   
     <script>
+         /* TODO 
+            - use id to get tempo, duration, genres
+            - put id into spotify to get similar songs
+            - sort those songs by tempo/bpm
+            - make up a function of time of the ideal change in tempo
+            - when each song is done, reference the function (pass in current time) and get
+                        back the ideal bpm for the current time
+            - play next song that fits in the range of ideal bpm
+        */
+        
+        var apikey = "JFWCRLMETTMP5IJCA";
+        var clientID = "40f5df559dbd45f09cff9f08a29a0ec6";
+        var tempo;
+        var id;
+        var duration;
+        var restingHeartRate;
+        var targetHeartRate;
+        var genres = [];
+        var songsList = [];
+        
         function getSongs() {
+            songsList = [];
             var seedName = $("#seedname").val();
             var seedArtist = $("#seedartist").val();
-            var apikey = "JFWCRLMETTMP5IJCA";
-            
             var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
                 apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
             var bucketUrl;
-            var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
-                + "&name=" + seedArtist + "&format=json";
-            var id;
-            var tempo = 0;
-            var genres;
-            var duration = 0;
+            var spotifyID;
             $.ajax({
                 url: url,
                 success: function(data, status) {
                     id = data.response.songs[0].id;
+                    console.log(id);
                     bucketUrl = "http://developer.echonest.com/api/v4/song/profile?api_key=" + apikey 
                         + "&id=" + id + "&bucket=audio_summary";
-                    $.ajax({
-                        url: bucketUrl,
-                        success: function(data, status) {
-                            tempo = data.response.songs[0].audio_summary.tempo;
-                            console.log("tempo: " + tempo);
-                            duration = data.response.songs[0].audio_summary.duration;
-                            console.log("duration" + duration);
-                        }
-                    });
+                    callBucket(bucketUrl, seedArtist);
                 }
-            });
+            });    
+            // spotifyID = getSpotifyID(id, seedName, seedArtist, apikey);
+            // return spotifyID;
+        }
+        
+        function callBucket(bucketUrl, seedArtist) {
             $.ajax({
-                url: styleUrl,
+                url: bucketUrl,
                 success: function(data, status) {
-                    for (var i = 0; i < data.response.terms.length; i++) {
-                        genres.add(data.response.terms[i].name);
-                    }
+                    tempo = data.response.songs[0].audio_summary.tempo;
+                    duration = data.response.songs[0].audio_summary.duration;
+                    var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
+                        + "&name=" + encodeURI(seedArtist) + "&format=json";
+                    getGenre(styleUrl);
                 }
             });
         }
-    // JFWCRLMETTMP5IJCA 
+        
+        function getGenre(styleUrl) {
+             $.ajax({
+                url: styleUrl,
+                success: function(data, status) {
+                    for (var i = 0; i < data.response.terms.length; i++) {
+                        genres.push(data.response.terms[i].name);
+                    }
+                    similarSongs();
+                }
+            });  
+        }   
+            
+        function similarSongs() {
+            restingHeartRate = $("#restingHeartRate").val();
+            targetHeartRate = restingHeartRate * .8;
+            // var numSongs = Math.ceil($("#duration").val() / 2.5);
+            var numSongs = Math.ceil($("#duration").val() * 5); // todo fix algorithm problem
+            var radiourl = "http://developer.echonest.com/api/v4/playlist/static?api_key=" +
+                apikey + "&song_id=" + id + "&min_tempo=" + targetHeartRate + "&max_tempo=" 
+                + restingHeartRate + "&format=json&results=" + numSongs +
+                "&type=song-radio&bucket=audio_summary&sort=tempo-desc" 
+            // sort increasing or decreasing depending on activity
+            $.ajax({
+                url: radiourl,
+                success: function(data, status) {
+                    var temp = data.response.songs;
+                    for (var i = 0; i < numSongs; i++) {
+                        songsList.push({
+                            "artist_name"   :   temp[i].artist_name,
+                            "title"         :   temp[i].title,
+                            "tempo"         :   temp[i].audio_summary.tempo
+                        });
+                    }
+                    authSpotify();
+                }
+            });
+        }
+        
+        function authSpotify() {
+            
+        }
+   
+        function getSpotifyID(name, artist, apikey) {
+            var spotifyUrl = "http://developer.echonest.com/api/v4/song/search?api_key=" +
+                apikey + "&format=json&results=1&artist=" + encodeURI(artist) + "&title=" + 
+                encodeURI(name) + "&bucket=id:spotify&bucket=tracks&limit=true";
+            var spotifyID = 0;
+            $.ajax({
+                url: spotifyUrl,
+                success: function(data, status) {
+                    spotifyID = data.response.songs[0].artist_foreign_ids[0].foreign_id;
+                    playSong(spotifyID);
+                }
+            });
+        }
     </script>
   
     <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
