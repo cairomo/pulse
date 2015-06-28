@@ -104,6 +104,10 @@ var songsList = []; // list of all similar songs, sorted
 var finalList = []; // list of songs in playlist in order
 var spotifyURIS = []; // spotify uris for finallist songs
 var error = 5; // + or - range from ideal bpm
+var playlistID;
+var trackStrings = "https://embed.spotify.com/?uri=spotify:trackset:PULSE:";
+var username;
+var access_token;
 
 function getSongs() {
     songsList = [];
@@ -224,6 +228,10 @@ function swap(items, firstIndex, secondIndex) {
     items[firstIndex] = items[secondIndex];
     items[secondIndex] = temp;
 }*/
+              
+function createButton() {
+    $("#playlist").html('<iframe src="' + trackStrings + '"frameborder="0" allowtransparency="true"  width="500" height="80"></iframe>');
+}
 
 function filterList() {
     var counter = 0;
@@ -231,11 +239,12 @@ function filterList() {
     for (var i = 0; i < songsList.length; i++) {
         if (Math.abs(songsList[i].tempo - idealBPM(counter)) < error) {
             finalList.push(songsList[i]);
-            totalPlaylistTime += songsList[i].duration;
+            getSpotifyID(songsList[i].title, songsList[i].artist_name, apikey);
             console.log("title: " + songsList[i].title + "\t" + songsList[i].tempo);
         }
         counter += songsList[i].duration;
     }
+    createButton();
 }
 
 function idealBPM(time) {
@@ -257,8 +266,8 @@ function getSpotifyID(name, artist, apikey) {
     $.ajax({
         url: spotifyUrl,
         success: function(data, status) {
-            spotifyID = data.response.songs[0].artist_foreign_ids[0].foreign_id;
-            playSong(spotifyID);
+            spotifyID = data.response.songs[0].id;
+            addToPlaylist(spotifyID, playlistID);
         }
     });
 }
@@ -344,8 +353,8 @@ function getSpotifyID(name, artist, apikey) {
 
         var params = getHashParams();
 
-        var access_token = params.access_token,
-            refresh_token = params.refresh_token,
+        access_token = params.access_token;
+         var refresh_token = params.refresh_token,
             error = params.error;
 
         if (error) {
@@ -360,7 +369,6 @@ function getSpotifyID(name, artist, apikey) {
               refresh_token: refresh_token
             });
               
-              var username;
 
             $.ajax({
                 url: 'https://api.spotify.com/v1/me',
@@ -410,14 +418,32 @@ function getSpotifyID(name, artist, apikey) {
                     'public': true
                 }),
                 success: function(response) {
-                    var playlistID = response.id;
+                    playlistID = response.id;
                   console.log(response);
-                    addToPlaylist();
                 }
             });     
         }
         
         function addToPlaylist(track, playlistID) {
+            trackStrings += track;
+            trackStrings +=",";
+            /*
+            $.ajax({
+                url: "https://api.spotify.com/v1/users/" +username+ "/playlists/"+ playlistID + "/tracks",
+                method: "POST",
+                Accept: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                data: {
+                    "uris" : track
+                },
+                success: function(response) {
+                    console.log(response);
+                }
+            });*/
         }
         
     </script>
@@ -468,6 +494,8 @@ function getSpotifyID(name, artist, apikey) {
         </p>
         <br>
         <button type="button" id="playlist" class="btn btn-lg btn-danger" onclick="getSongs()">GENERATE PLAYLIST</button>
+        <div id="playlist">
+        </div>
   </center>
 </html>
 
