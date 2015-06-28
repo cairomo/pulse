@@ -2,9 +2,10 @@
 <html>
   <head>
     <title>pulse</title>
-       		<!-- Latest compiled and minified JavaScript -->
- 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+             		<!-- Latest compiled and minified JavaScript -->
+ 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
      <!-- Latest compiled and minified CSS -->
  	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 
@@ -71,7 +72,7 @@
     </style>
     <style type="text/css">
       #login, #loggedin {
-        display: none;
+        display: visible;
       }
       .text-overflow {
         overflow: hidden;
@@ -311,7 +312,6 @@ function getSpotifyID(name, artist, apikey) {
     </script>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
     <script>
       (function() {
 
@@ -346,12 +346,16 @@ function getSpotifyID(name, artist, apikey) {
         if (error) {
           alert('There was an error during the authentication');
         } else {
-          if (access_token) {
+          if (access_token) { // success
+                $('#login').hide();
+                $('#loggedin').show();
             // render oauth info
             oauthPlaceholder.innerHTML = oauthTemplate({
               access_token: access_token,
               refresh_token: refresh_token
             });
+              
+              var username;
 
             $.ajax({
                 url: 'https://api.spotify.com/v1/me',
@@ -359,22 +363,17 @@ function getSpotifyID(name, artist, apikey) {
                   'Authorization': 'Bearer ' + access_token
                 },
                 success: function(response) {
-                  userProfilePlaceholder.innerHTML = userProfileTemplate(response);
-
-                  $('#login').hide();
-                  $('#loggedin').show();
+                  username = response.id;
+                    makePlaylist(username, access_token);
                 }
             });
-              
-              
               
           } else {
               // render initial screen
               $('#login').show();
               $('#loggedin').hide();
           }
-
-          document.getElementById('obtain-new-token').addEventListener('click', function() {
+     /*       document.getElementById('obtain-new-token').addEventListener('click', function() {
             $.ajax({
               url: '/refresh_token',
               data: {
@@ -387,9 +386,30 @@ function getSpotifyID(name, artist, apikey) {
                 refresh_token: refresh_token
               });
             });
-          }, false);
+          }, false); */
         }
       })();
+        
+        function makePlaylist(id, access_token) {
+            $.ajax({
+                url: "https://api.spotify.com/v1/users/"+id+"/playlists",
+                method: "POST",
+                Accept: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    'name': 'playlist',
+                    'public': true
+                }),
+                success: function(response) {
+                  console.log(response);
+                }
+            });     
+        }
+        
     </script>
       
       <center>
