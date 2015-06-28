@@ -19,6 +19,7 @@
 
  		<!-- Latest compiled and minified JavaScript -->
  	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script src="http://static.echonest.com/enspex/web/common/spotify_en_tools.js"></script>
    <script>
         /* TODO 
             - use id to get tempo, duration, genres
@@ -32,18 +33,20 @@
         
         var apikey = "JFWCRLMETTMP5IJCA";
         var clientID = "40f5df559dbd45f09cff9f08a29a0ec6";
-        var tempo;
         var id;
         var duration;
         var restingHeartRate;
         var targetHeartRate;
         var genres = [];
-        var songsList = [];
+        var songsList = []; // list of all similar songs, sorted
+        var finalList = []; // list of songs in playlist in order
+        var error = 3; // + or - range from ideal bpm
         
         function getSongs() {
             songsList = [];
             var seedName = $("#seedname").val();
             var seedArtist = $("#seedartist").val();
+            duration = $("#duration").val();
             var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
                 apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
             var bucketUrl;
@@ -66,8 +69,6 @@
             $.ajax({
                 url: bucketUrl,
                 success: function(data, status) {
-                    tempo = data.response.songs[0].audio_summary.tempo;
-                    duration = data.response.songs[0].audio_summary.duration;
                     var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
                         + "&name=" + encodeURI(seedArtist) + "&format=json";
                     getGenre(styleUrl);
@@ -105,14 +106,59 @@
                         songsList.push({
                             "artist_name"   :   temp[i].artist_name,
                             "title"         :   temp[i].title,
-                            "tempo"         :   temp[i].audio_summary.tempo
+                            "tempo"         :   temp[i].audio_summary.tempo,
+                            "duration"      :   temp[i].audio_summary.duration
                         });
                         console.log("title: " + songsList[i].title + "\n");
                         console.log("tempo: " + songsList[i].tempo + "\n\n");
                     }
-                    // authSpotify();
+                    sort();
                 }
             });
+        }
+       
+        function sort() {
+            var pivot = songsList[Math.floor((right + left) / 2)].tempo;
+            var lo = 0;
+            var hi = songsList.length;
+
+            while (lo <= hi) {
+                while (songsList[lo].tempo < pivot) {
+                    lo++;
+                }
+                while (songsList[hi].tempo > pivot) {
+                    hi--;
+                }
+                if (lo <= hi) {
+                    swap(songsList, lo, hi);
+                    lo++;
+                    hi--;
+                }
+            }
+            filterList();
+        }
+       
+        function swap(items, firstIndex, secondIndex) {
+            var temp = items[firstIndex];
+            items[firstIndex] = items[secondIndex];
+            items[secondIndex] = temp;
+        }
+       
+        function filterList() {
+            var counter = 0;
+            for (var i = 0; i < songsList.length; i++) {
+                if (Math.floor(counter / 60) < duration) { 
+                    if (Math.abs(songsList[i].tempo - idealBPM(counter, songsList[i].tempo)) < error) {
+                        finalList.push(songsList[i]);
+                        counter += songsList[i].duration;
+                    }
+                }
+            }
+        }
+       
+        function idealBPM(time, songLength) {
+            var bpm = ((targetHeartRate - restingHeartRate) / songLength) * time + restingHeartRate;
+            return bpm;
         }
    
         function getSpotifyID(name, artist, apikey) {
@@ -128,7 +174,7 @@
                 }
             });
         }
-        
+       
     // JFWCRLMETTMP5IJCA 
     </script>
 
