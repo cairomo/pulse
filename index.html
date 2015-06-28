@@ -8,13 +8,16 @@
     <meta name="Pulse" content="">
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
-    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?    family=Quicksand">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Quicksand">
 
     <title>Dashboard Template for Bootstrap</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="../Static/css/bootstrap.css" rel="stylesheet">
-    <link href="../Static/css/custom.css" rel="stylesheet">
+     <!-- Latest compiled and minified CSS -->
+ 	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+ 	  <!-- Optional theme -->
+ 	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
 
     <!-- Custom styles for this template -->
     <link href="dashboard.css" rel="stylesheet">
@@ -41,7 +44,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-             <img class="navbar-icon" src="icon.png" alt="Pulse logo">
+             <img class="navbar-icon" src="https://cloud.githubusercontent.com/assets/5784284/8395221/8e7bb812-1d18-11e5-96e3-cc4ab25e9383.png" alt="Pulse logo" height="50px">
             <a class="navbar-brand" href="#">PULSE</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
@@ -82,7 +85,7 @@
                   <th>#</th>
                   <th>ARTIST</th>
                   <th>SONG</th>
-                  <th>ALBUM</th>
+                  <th>TEMPO</th>
                   <th>TIME</th>
                 </tr>
               </thead>
@@ -91,70 +94,70 @@
                   <td>1</td>
                   <td>Artist 1</td>
                   <td>Song 1</td>
-                  <td>Album 1</td>
+                  <td>bpm 1</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>2</td>
                   <td>Artist 2</td>
                   <td>Song 2</td>
-                  <td>Album 2</td>
+                  <td>bpm 2</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>3</td>
                   <td>Artist 3</td>
                   <td>Song 3</td>
-                  <td>Album 3</td>
+                  <td>bpm 3</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>4</td>
                   <td>Artist 4</td>
                   <td>Song 4</td>
-                  <td>Album 4</td>
+                  <td>bpm 4</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>5</td>
                   <td>Song 5</td>
                   <td>Artist 5</td>
-                  <td>Album 5</td>
+                  <td>bpm 5</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>6</td>
                   <td>Song 6</td>
                   <td>Artist 6</td>
-                  <td>Album 6</td>
+                  <td>bpm 6</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>7</td>
                   <td>Song 7</td>
                   <td>Artist 7</td>
-                  <td>Album 7</td>
+                  <td>bpm 7</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>8</td>
                   <td>Artist 8</td>
                   <td>Song 8</td>
-                  <td>Album 8</td>
+                  <td>bpm 8</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>9</td>
                   <td>Artist 9</td>
                   <td>Song 9</td>
-                  <td>Album 9</td>
+                  <td>bpm 9</td>
                   <td>00:00</td>
                 </tr>
                 <tr>
                   <td>10</td>
                   <td>Artist 10</td>
                   <td>Song 10</td>
-                  <td>Album 10</td>
+                  <td>bpm 10</td>
                   <td>00:00</td>
                 </tr>
               </tbody>
@@ -169,190 +172,7 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="../../dist/js/bootstrap.min.js"></script>
-    <!-- Just to make our placeholder images work. Don't actually copy the next line! -->
-    <script src="../../assets/js/vendor/holder.min.js"></script>
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>
   
 
 </body></html>
-                                               
- PULSE
-                  
--->
-    
-<head>
-    <meta charset="utf-8">
-     <title>pulse</title>
-    
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
   
-    <script>
-         /* TODO 
-            - use id to get tempo, duration, genres
-            - put id into spotify to get similar songs
-            - sort those songs by tempo/bpm
-            - make up a function of time of the ideal change in tempo
-            - when each song is done, reference the function (pass in current time) and get
-                        back the ideal bpm for the current time
-            - play next song that fits in the range of ideal bpm
-        */
-        
-        var apikey = "JFWCRLMETTMP5IJCA";
-        var clientID = "40f5df559dbd45f09cff9f08a29a0ec6";
-        var tempo;
-        var id;
-        var duration;
-        var restingHeartRate;
-        var targetHeartRate;
-        var genres = [];
-        var songsList = [];
-        
-        function getSongs() {
-            songsList = [];
-            var seedName = $("#seedname").val();
-            var seedArtist = $("#seedartist").val();
-            var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
-                apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
-            var bucketUrl;
-            var spotifyID;
-            $.ajax({
-                url: url,
-                success: function(data, status) {
-                    id = data.response.songs[0].id;
-                    console.log(id);
-                    bucketUrl = "http://developer.echonest.com/api/v4/song/profile?api_key=" + apikey 
-                        + "&id=" + id + "&bucket=audio_summary";
-                    callBucket(bucketUrl, seedArtist);
-                }
-            });    
-            // spotifyID = getSpotifyID(id, seedName, seedArtist, apikey);
-            // return spotifyID;
-        }
-        
-        function callBucket(bucketUrl, seedArtist) {
-            $.ajax({
-                url: bucketUrl,
-                success: function(data, status) {
-                    tempo = data.response.songs[0].audio_summary.tempo;
-                    duration = data.response.songs[0].audio_summary.duration;
-                    var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
-                        + "&name=" + encodeURI(seedArtist) + "&format=json";
-                    getGenre(styleUrl);
-                }
-            });
-        }
-        
-        function getGenre(styleUrl) {
-             $.ajax({
-                url: styleUrl,
-                success: function(data, status) {
-                    for (var i = 0; i < data.response.terms.length; i++) {
-                        genres.push(data.response.terms[i].name);
-                    }
-                    similarSongs();
-                }
-            });  
-        }   
-            
-        function similarSongs() {
-            restingHeartRate = $("#restingHeartRate").val();
-            targetHeartRate = restingHeartRate * .8;
-            // var numSongs = Math.ceil($("#duration").val() / 2.5);
-            var numSongs = Math.ceil($("#duration").val() * 5); // todo fix algorithm problem
-            var radiourl = "http://developer.echonest.com/api/v4/playlist/static?api_key=" +
-                apikey + "&song_id=" + id + "&min_tempo=" + targetHeartRate + "&max_tempo=" 
-                + restingHeartRate + "&format=json&results=" + numSongs +
-                "&type=song-radio&bucket=audio_summary&sort=tempo-desc" 
-            // sort increasing or decreasing depending on activity
-            $.ajax({
-                url: radiourl,
-                success: function(data, status) {
-                    var temp = data.response.songs;
-                    for (var i = 0; i < numSongs; i++) {
-                        songsList.push({
-                            "artist_name"   :   temp[i].artist_name,
-                            "title"         :   temp[i].title,
-                            "tempo"         :   temp[i].audio_summary.tempo
-                        });
-                    }
-                    authSpotify();
-                }
-            });
-        }
-        
-        function authSpotify() {
-            
-        }
-   
-        function getSpotifyID(name, artist, apikey) {
-            var spotifyUrl = "http://developer.echonest.com/api/v4/song/search?api_key=" +
-                apikey + "&format=json&results=1&artist=" + encodeURI(artist) + "&title=" + 
-                encodeURI(name) + "&bucket=id:spotify&bucket=tracks&limit=true";
-            var spotifyID = 0;
-            $.ajax({
-                url: spotifyUrl,
-                success: function(data, status) {
-                    spotifyID = data.response.songs[0].artist_foreign_ids[0].foreign_id;
-                    playSong(spotifyID);
-                }
-            });
-        }
-    </script>
-  
-    <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
-    <style type="text/css">
-    /* css goes here */
-        * {margin:0;border:0;padding:0;}
-        html {
-            height:100%;
-        }
-      body {
-    background-color: fbd12e;
-    font-family: open sans:
-}
-#navbar {
-    color: white;
-}
-.navbar-icon {
-    height: 50px;
-    width: 50px;
-}
-.navbar-inverse {
-  background-color: #666666;
-}
-h1 {
-    color: 666666;
-}
-h2 {
-    color: 666666;
-}
-th {
-    color: 666666;
-}
-h4 {
-    color: 666666;
-}}
-    </style>
-</head>
-
-<body>
-    <header><h2>PULSE</h2></header>
-        <center>
-            Seed song name:<br>
-            <input type="text" name="seedname">
-            <p>
-            Seed song artist:<br>
-            <input type="text" name="seedartist">
-            <p>
-            Activity:<br>
-            <select id="activitymenu">
-              <option value="sleep">sleeping</option>
-              <option value="run">running</option>
-            </select>
-            <button type="button" id="generate">GENERATE</button>
-        </center>
-</body>
-    
-
-</html>
