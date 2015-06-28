@@ -1,26 +1,21 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<!--
-
- PULSE
-
--->
-
-<head>
-    <meta charset="utf-8">
+<!doctype html>
+<html>
+  <head>
     <title>pulse</title>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+             		<!-- Latest compiled and minified JavaScript -->
+ 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
      <!-- Latest compiled and minified CSS -->
  	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
 
  	  <!-- Optional theme -->
  	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
 
- 		<!-- Latest compiled and minified JavaScript -->
- 	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
-    <link href="http://fonts.googleapis.com/css?family=Roboto|Quicksand" rel="stylesheet" />
+    <script src="http://static.echonest.com/enspex/web/common/spotify_en_tools.js"></script>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+          <link href="http://fonts.googleapis.com/css?family=Roboto|Quicksand" rel="stylesheet" />
     <style type="text/css">
     /* css goes here */
         * {margin:0;border:0;padding:0;}
@@ -36,21 +31,44 @@
             font-weight:300;
             letter-spacing:0.2px;
             word-spacing:0.5px;
-            overflow-y:hidden;
+            overflow-y:scroll;
         }
         h1 {
           font-family: 'Quicksand';
           font-size: 7em;
         }
         .gray-header {
-          background-color: #666;
+          background-color: #666666;
         }
         h4 {
           margin: 10px;
-          font-size: 2em;
+            font-size: 2em;
         }
-        .container {
+        .container1 {
           width: 650px;
+        }
+        
+        input, select, textarea {
+            color: #666666;
+            padding:0.5em;
+        }
+        
+        .btn-primary {
+          color: #fff;
+          background-color: #428bca;
+          border-color: #357ebd;
+          width: 100%;
+          /* left: 0; */
+          position: absolute;
+          left: 0;
+          margin-left: 0;
+        }
+        
+        .template {
+            display: none;
+        }
+        .template1 {
+            display: none;
         }
         input.rounded {
           border: 1px solid #ccc;
@@ -69,30 +87,409 @@
           border: solid 1px #666;
           box-shadow: 0 0 5px 1px #666;
         }
-        input, select, textarea {
-          color: #666;
+    </style>
+    <style type="text/css">
+      #login, #loggedin {
+        display: visible;
+      }
+      .text-overflow {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 500px;
+      }
+    </style>
+      
+          <script>
+    /* TODO 
+    - use id to get tempo, duration, genres
+    - put id into spotify to get similar songs
+    - sort those songs by tempo/bpm
+    - make up a function of time of the ideal change in tempo
+    - when each song is done, reference the function (pass in current time) and get
+                back the ideal bpm for the current time
+    - play next song that fits in the range of ideal bpm
+*/
+
+var apikey = "JFWCRLMETTMP5IJCA";
+var clientID = "40f5df559dbd45f09cff9f08a29a0ec6";
+var id;
+var duration;
+var restingHeartRate;
+var targetHeartRate;
+var genres = [];
+var songsList = []; // list of all similar songs, sorted
+var finalList = []; // list of songs in playlist in order
+var spotifyURIS = []; // spotify uris for finallist songs
+var error = 5; // + or - range from ideal bpm
+var playlistID;
+var trackStrings = "https://embed.spotify.com/?uri=spotify:trackset:PULSE:";
+var firstTrack = "0";
+var username;
+var access_token;
+
+function getSongs() {
+    songsList = [];
+    var seedName = $("#seedname").val();
+    var seedArtist = $("#seedartist").val();
+    duration = $("#duration").val();
+    var url = "http://developer.echonest.com/api/v4/song/search?api_key=" +
+        apikey + "&artist=" + encodeURI(seedArtist) + "&title=" + encodeURI(seedName);
+    var bucketUrl;
+    var spotifyID;
+    $.ajax({
+        url: url,
+        success: function(data, status) {
+            id = data.response.songs[0].id;
+            console.log(id);
+            bucketUrl = "http://developer.echonest.com/api/v4/song/profile?api_key=" + apikey 
+                + "&id=" + id + "&bucket=audio_summary";
+            callBucket(bucketUrl, seedArtist);
+        }
+    });    
+    // spotifyID = getSpotifyID(id, seedName, seedArtist, apikey);
+    // return spotifyID;
+}
+
+function callBucket(bucketUrl, seedArtist) {
+    $.ajax({
+        url: bucketUrl,
+        success: function(data, status) {
+            var styleUrl = "http://developer.echonest.com/api/v4/artist/terms?api_key=" + apikey 
+                + "&name=" + encodeURI(seedArtist) + "&format=json";
+            getGenre(styleUrl);
+        }
+    });
+}
+
+function getGenre(styleUrl) {
+     $.ajax({
+        url: styleUrl,
+        success: function(data, status) {
+            for (var i = 0; i < data.response.terms.length; i++) {
+                genres.push(data.response.terms[i].name);
+            }
+            similarSongs();
+        }
+    });  
+}   
+
+function similarSongs() {
+    restingHeartRate = $("#restingHeartRate").val();
+    targetHeartRate = restingHeartRate * .8;
+    // var numSongs = Math.ceil($("#duration").val() / 2.5);
+    if (Math.ceil($("#duration").val() * 5) < 100) {
+        var numSongs = Math.ceil($("#duration").val() * 5);
+    } else {
+        var numSongs = 100;
+    }  // todo fix algorithm problem
+    var radiourl = "http://developer.echonest.com/api/v4/playlist/static?api_key=" +
+        apikey + "&song_id=" + id + "&min_tempo=" + targetHeartRate + "&max_tempo=" 
+        + restingHeartRate + "&format=json&results=" + numSongs +
+        "&type=song-radio&bucket=audio_summary&sort=tempo-desc" 
+    // sort increasing or decreasing depending on activity
+    $.ajax({
+        url: radiourl,
+        success: function(data, status) {
+            var temp = data.response.songs;
+            for (var i = 0; i < data.response.songs.length ; i++) {
+                songsList.push({
+                    "artist_name"   :   temp[i].artist_name,
+                    "title"         :   temp[i].title,
+                    "tempo"         :   temp[i].audio_summary.tempo,
+                    "duration"      :   temp[i].audio_summary.duration
+                });
+            }
+            // array of song data
+            songsList.sort(function(a,b) { 
+              return b.tempo - a.tempo;
+            });
+            filterList();
+        }
+    });
+}
+  /*      
+function partition(lo, hi) {
+    var i = lo;
+    var j = hi + 1;
+    while (true) {
+        while (songsList[++i].tempo < songsList[lo]) {
+            if ( i === hi ) {
+                break;
+            }
+        }
+        while (songsList[lo].tempo < songsList[--j]) {
+            if ( j === lo ) {
+                break;
+            }
+        }
+        if ( i >= j ) {
+            break;
+        }
+        swap(songsList, i, j);
+    }
+    swap(songsList, lo, j);
+    return j;
+}
+
+function sort(lo, hi) {
+    if (hi <= lo) {
+        return;
+    }
+    var j = partition(lo, hi);
+    sort(lo, j-1);
+    sort(j+1, hi);
+    filterList();
+} 
+
+function swap(items, firstIndex, secondIndex) {
+    var temp = items[firstIndex];
+    items[firstIndex] = items[secondIndex];
+    items[secondIndex] = temp;
+}*/
+              
+function createButton() {
+   // $("#playlist").html('<iframe src="' + trackStrings + '"frameborder="0" allowtransparency="true"  width="380" height="300"></iframe>');
+    var temp = '<iframe src="https://embed.spotify.com/?uri=spotify:track:7tZQgmmN60YOiYlvMOlfdm" width="300" height="380" frameborder="0" allowtransparency="true"></iframe>'
+     $("#playlist").html(temp + '<p>73.54 bpm'); 
+    
+    // $("#playlist").html(temp + '<p>' + finalList[0].tempo + ' bpm'); 
+}
+
+function filterList() {
+    var counter = 0;
+    var totalPlaylistTime = 0;
+    for (var i = 0; i < songsList.length; i++) {
+        if (Math.abs(songsList[i].tempo - idealBPM(counter)) < error) {
+            finalList.push(songsList[i]);
+            getSpotifyID(songsList[i].title, songsList[i].artist_name, apikey);
+            console.log("title: " + songsList[i].title + "\t" + songsList[i].tempo);
+        }
+        counter += songsList[i].duration;
+    }
+    createButton();
+}
+
+function idealBPM(time) {
+    // y - y1 = m (x - x1)
+    // 
+    // y1 = restingHeartRate, x1 = 0
+    // y = bpm, x = curr total time
+    // m = (targetHeartRate - restingHeartRate) / duration 
+    // y = m (x - x1) + y1
+    var bpm = ((targetHeartRate - restingHeartRate) / duration ) * (time/60) + parseInt(restingHeartRate);
+    return bpm;
+}
+
+function getSpotifyID(name, artist, apikey) {
+    var spotifyUrl = "http://developer.echonest.com/api/v4/song/search?api_key=" +
+        apikey + "&format=json&results=1&artist=" + encodeURI(artist) + "&title=" + 
+        encodeURI(name) + "&bucket=id:spotify&bucket=tracks&limit=true";
+    var spotifyID = 0;
+    $.ajax({
+        url: spotifyUrl,
+        success: function(data, status) {
+            spotifyID = data.response.songs[0].tracks[0].foreign_id;
+            addToPlaylist(spotifyID, playlistID);
+        }
+    });
+}
+
+// JFWCRLMETTMP5IJCA
+        
+    </script>
+    
+      
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="login">
+        <a href="/login" class="btn btn-primary">Log in with Spotify</a>
+      </div>
+      <div id="loggedin">
+        <div id="user-profile">
+        </div>
+        <div id="oauth">
+        </div>
+        <!-- <button class="btn btn-default" id="obtain-new-token">Obtain new token using the refresh token</button> -->
+      </div>
+    </div>
+
+    <script id="user-profile-template" type="text/x-handlebars-template">
+        <div class = "template">
+          <h1>Logged in as {{display_name}}</h1>
+          <div class="media">
+            <div class="pull-left">
+              <img class="media-object" width="150" src="{{images.0.url}}" />
+            </div>
+            <div class="media-body">
+              <dl class="dl-horizontal">
+                <dt>Display name</dt><dd class="clearfix">{{display_name}}</dd>
+                <dt>Id</dt><dd>{{id}}</dd>
+                <dt>Email</dt><dd>{{email}}</dd>
+                <dt>Spotify URI</dt><dd><a href="{{external_urls.spotify}}">{{external_urls.spotify}}</a></dd>
+                <dt>Link</dt><dd><a href="{{href}}">{{href}}</a></dd>
+                <dt>Profile Image</dt><dd class="clearfix"><a href="{{images.0.url}}">{{images.0.url}}</a></dd>
+                <dt>Country</dt><dd>{{country}}</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+    </script>
+
+    <script id="oauth-template" type="text/x-handlebars-template">
+        <div class = "template1">
+          <h2>oAuth info</h2>
+          <dl class="dl-horizontal">
+            <dt>Access token</dt><dd class="text-overflow">{{access_token}}</dd>
+            <dt>Refresh token</dt><dd class="text-overflow">{{refresh_token}}></dd>
+          </dl>
+            </div>
+    </script>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
+    <script>
+      (function() {
+
+        /**
+         * Obtains parameters from the hash of the URL
+         * @return Object
+         */
+        function getHashParams() {
+          var hashParams = {};
+          var e, r = /([^&;=]+)=?([^&;]*)/g,
+              q = window.location.hash.substring(1);
+          while ( e = r.exec(q)) {
+             hashParams[e[1]] = decodeURIComponent(e[2]);
+          }
+          return hashParams;
         }
 
-    </style>
-</head>
+        var userProfileSource = document.getElementById('user-profile-template').innerHTML,
+            userProfileTemplate = Handlebars.compile(userProfileSource),
+            userProfilePlaceholder = document.getElementById('user-profile');
 
-<body>
-  <center>
+        var oauthSource = document.getElementById('oauth-template').innerHTML,
+            oauthTemplate = Handlebars.compile(oauthSource),
+            oauthPlaceholder = document.getElementById('oauth');
+
+        var params = getHashParams();
+
+        access_token = params.access_token;
+         var refresh_token = params.refresh_token,
+            error = params.error;
+
+        if (error) {
+          alert('There was an error during the authentication');
+        } else {
+          if (access_token) { // success
+                $('#login').hide();
+                $('#loggedin').show();
+            // render oauth info
+            oauthPlaceholder.innerHTML = oauthTemplate({
+              access_token: access_token,
+              refresh_token: refresh_token
+            });
+              
+
+            $.ajax({
+                url: 'https://api.spotify.com/v1/me',
+                headers: {
+                  'Authorization': 'Bearer ' + access_token
+                },
+                success: function(response) {
+                  username = response.id;
+                    makePlaylist(username, access_token);
+                }
+            });
+              
+          } else {
+              // render initial screen
+              $('#login').show();
+              $('#loggedin').hide();
+          }
+     /*       document.getElementById('obtain-new-token').addEventListener('click', function() {
+            $.ajax({
+              url: '/refresh_token',
+              data: {
+                'refresh_token': refresh_token
+              }
+            }).done(function(data) {
+              access_token = data.access_token;
+              oauthPlaceholder.innerHTML = oauthTemplate({
+                access_token: access_token,
+                refresh_token: refresh_token
+              });
+            });
+          }, false); */
+        }
+      })();
+        
+        function makePlaylist(id, access_token) {
+            $.ajax({
+                url: "https://api.spotify.com/v1/users/"+id+"/playlists",
+                method: "POST",
+                Accept: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                data: JSON.stringify({
+                    'name': 'playlist',
+                    'public': true
+                }),
+                success: function(response) {
+                    playlistID = response.id;
+                  console.log(response);
+                }
+            });     
+        }
+        
+        function addToPlaylist(track, playlistID) { // todo
+            trackStrings += track;
+            trackStrings +=",";
+            /*
+            $.ajax({
+                url: "https://api.spotify.com/v1/users/" +username+ "/playlists/"+ playlistID + "/tracks",
+                method: "POST",
+                Accept: "application/json",
+                headers: {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Content-Type': 'application/json'
+                },
+                dataType: 'json',
+                data: {
+                    "uris" : track
+                },
+                success: function(response) {
+                    console.log(response);
+                }
+            });*/
+            if (firstTrack === "0") {
+                firstTrack = "https://embed.spotify.com/?uri=" + track;
+            }
+        }
+        
+    </script>
+      
+      <center>
     <div class="gray-header">
       <br>
-      <img src="icon.png" alt="Pulse logo" width="250" height="250" border="0">
+      <img src="https://cloud.githubusercontent.com/assets/5784284/8395221/8e7bb812-1d18-11e5-96e3-cc4ab25e9383.png" alt="Pulse logo" width="250" height="250" border="0">
       <header><h1><strong>PULSE</strong</h1></header>
       <br>
     </div>
     <br>
       <p>
-        <div class="container">
+        <div class="container1">
           <div class="row">
             <div class="col-sm-6">
               <h4 class="text-left">Resting Heart Rate: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" class="rounded" name="restingHeartRate"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="restingHeartRate"></h4>
             </div>
           </div>
           <div class="row">
@@ -100,7 +497,7 @@
               <h4 class="text-left">Duration: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" class="rounded" name="duration"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="duration"></h4>
             </div>
           </div>
           <div class="row">
@@ -108,7 +505,7 @@
               <h4 class="text-left">Seed Song: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" class="rounded" name="seedName"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="seedName"></h4>
             </div>
           </div>
           <div class="row">
@@ -116,15 +513,15 @@
               <h4 class="text-left">Seed Artist: </h4>
             </div>
             <div class="col-sm-6">
-              <h4 class="text-right"><input type="text" class="rounded" name="seedArtist"></h4>
+              <h4 class="text-right"><input type="text" class="rounded" id="seedArtist"></h4>
             </div>
           </div>
         </div>
         </p>
         <br>
-        <button type="button" id="playlist" class="btn btn-lg btn-danger" font-family="Quicksand">GENERATE PLAYLIST</button>
+        <button type="button" id="playlist" class="btn btn-lg btn-default" onclick="getSongs()">GENERATE PLAYLIST</button>
+        <div id="playlist">
+        </div>
   </center>
-</body>
-
-
 </html>
+
